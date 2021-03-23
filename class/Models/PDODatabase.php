@@ -99,12 +99,12 @@
 		 * @param  int $id wartość identyfikatora
 		 * @return array rekord
 		 */
-    public function selecteOneById($id, $table = null) {
+    public function selectOneById($id, $id_name, $table = null) {
 				$this->testConnection();
 				$table = $this->getTableName($table);
 				$this->testTable($table);
 				try	{
-						$query = 'SELECT * FROM `'.$table.'` WHERE id = :id';
+						$query = 'SELECT * FROM `'.$table.'` WHERE '.$id_name.' = :id';
 						$stmt = $this->pdo->prepare($query);
           	$stmt->bindValue(':id', $id, PDO::PARAM_INT);
 						if($stmt->execute())
@@ -126,13 +126,13 @@
 		 * @param  int $id wartość identyfikatora
 		 * @return int ilość usuniętych rekordów lub -1 w przypadku błędu
 		 */
-    public function deleteOneById($id, $table = null) {
+    public function deleteOneById($id, $id_name, $table = null) {
 				$this->testConnection();
 				$table = $this->getTableName($table);
 				$this->testTable($table);
 				$counter = 0;
 				try	{
-						$query = 'DELETE FROM `'.$table.'` WHERE id = :id';
+						$query = 'DELETE FROM `'.$table.'` WHERE '.$id_name.' = :id';
 						$stmt = $this->pdo->prepare($query);
           	$stmt->bindValue(':id', $id, PDO::PARAM_INT);
 						if($stmt->execute())
@@ -142,8 +142,14 @@
 						$stmt->closeCursor();
 					}
 					catch(\PDOException $e)	{
+						if($e->getCode()==23000)
+						return -1;
+						//\Tools\FlashMessage::addWarning('Nie udało się usunać rekordu');
+						else{
 						throw new \Exceptions\Query($e);
 					}
+					}
+
 					return $counter;
 		}
 

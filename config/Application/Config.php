@@ -10,5 +10,6 @@
         public static $subdir           = '';     // podfolder projektu
         public static $protocol         = '';     // protokół aplikacji
         public static $adminEmail       = '';     // email administratora
+        public static $port             = '';
     }
     Config::init('Application');

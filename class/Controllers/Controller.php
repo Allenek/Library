@@ -1,6 +1,7 @@
 <?php
 	namespace Controllers;
 
+	use \Config\Application\Config;
   /**
    * abstrakcyjna klasa kontrolera
    */
@@ -10,10 +11,12 @@
      * @param  string $url adres przekierowania
      */
 		public function redirect($url) {
+			\Tools\Session::set('warning', \Tools\FlashMessage::getWarning());
+			\Tools\Session::set('success', \Tools\FlashMessage::getSuccess());
 			if(preg_match('/^http:/', $url) === 1)
 				header('location: '.$url);
 			else
-				header('location: '.\Config\Application\Config::$protocol.$_SERVER["SERVER_NAME"].'/'.\Config\Application\Config::$subdir.$url);
+				header('location: '.Config::$protocol.$_SERVER["SERVER_NAME"].(strlen(Config::$port) > 0 ? ":" . Config::$port : '').'/'.\Config\Application\Config::$subdir.$url);
       exit(0);
 		}
 
@@ -38,7 +41,7 @@
 			if(!class_exists($name))
 				throw new \Exceptions\Application();
       $view = new $name();
-      $view->setAssets();
+      //view->setAssets();
 			return $view;
 		}
 	  /**
@@ -53,5 +56,38 @@
 	      if(!array_key_exists($value, $inputArray))
 	        $inputArray[$value] = null;
 	    }
-	  }
+		}
+
+			/**
+			 * filtrowanie danych wejściowych pod kątem niebezpiecznych danych
+			 * @param  mixed $var
+			 * @return mixed
+			 */
+			public function protectXss($var) {
+				if(\is_array($var))
+					foreach ($var as &$value) {
+						$value = $this->protectXss($value);
+					}
+				else
+					$var = $this->checkVariable($var);
+				return $var;
+			}
+
+			/**
+			 * filtrowanie stringów pod kątem niebezpiecznych danych
+			 * @param  string $var
+			 * @return string
+			 */
+			public function checkVariable($var) {
+				return \is_string($var) ? \htmlspecialchars($var) : $var;
+			}
+
+			public function getPost($key, $default = null) {
+				return isset($_POST[$key]) ? $this->protectXss($_POST[$key]) : $default;
+			}
+
+			public function getGet($key, $default = null) {
+				return isset($_GET[$key]) ? $this->protectXss($_GET[$key]) : $default;
+			}
+	 
   }
